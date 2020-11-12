@@ -6,34 +6,33 @@
 # @File    : main.py
 # @Software: PyCharm
 # @version : 0.0.1
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5 import QtCore, QtGui, QtWidgets
 import ctypes, sys
 
-from sunflower import config, window, control
-
-try:
-    sys.platform.index('win')
-    ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
-except Exception as e:
-    pass
+from sunflower import *
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    MainWindow = QMainWindow()
-    # ui = mainWindow.Ui_DebugTerminalForm()
-    # ui = mainWindow.Ui_DebugGUIForm()
-
-    config = config.config()
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QWidget()
     try:
-        sunFlower = control.control(config=config)
-        ui = window.window()
+        # 加载 UI设计
+        gui = Window()
+        gui.setupUi(MainWindow)
+
+        # 加载 标题
         MainWindow.setWindowTitle('UCAS 4.5M Telescope')
-        MainWindow.setWindowIcon(QIcon('sunflower/favicon.ico'))
-        ui.setupUi(MainWindow)
-        ui.setupAction(MainWindow, sunFlower)
+
+        # 防止windows下加载 图标失败
+        sys.platform.index('win')
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
+        # 加载 图标
+        MainWindow.setWindowIcon(QtGui.QIcon('sunflower/internal/res/favicon.ico'))
+
+        # 加载控制器
+        gui.setupSunflower()
+
+        # 显示 GUI
         MainWindow.show()
         sys.exit(app.exec_())
     except Exception as e:
         print(e.with_traceback())
-        config.saveConfig()

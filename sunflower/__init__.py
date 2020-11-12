@@ -7,4 +7,24 @@
 # @Software: PyCharm
 # @version : 0.0.1
 
-from . import window2, calculator, communicator_ucas4_5, config, control, service
+from .internal.viewer import Viewer
+from .internal.window import Window
+from .internal.window_ui import Ui_Form
+from .internal.calculator import Calculator
+from .internal.config import Config
+from .internal.corrector import Corrector
+from .internal.communicator import Communicator
+from .internal.recorder import Recorder
+
+__all__ = [
+    'Viewer',
+    'Window',
+    'Ui_Form',
+    'Calculator',
+    'Config',
+    'Corrector',
+    'Communicator',
+    'Recorder',
+]
+
+__version__ = "0.1"
