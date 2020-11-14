@@ -8,9 +8,14 @@
 # @version : 0.0.1
 import sqlite3
 from sunflower.internal.model.offset import HAOffset, DECOffset
+from sunflower.internal.model.times import Times
+from sunflower.internal.model.target import Target
+import json
 
-HA="HAOffsetTabel"
-DEC="DECOffsetTabel"
+HA = "HAOffsetTabel"
+DEC = "DECOffsetTabel"
+
+
 # from sunflower.internal.util.sqliteUtils import SqliteUtils
 
 class Recorder():
@@ -27,23 +32,36 @@ class Recorder():
         """
         c = self.conn.cursor()
         if kind is HA:
-            cursor = c.execute("SELECT ha, haOffset from " + HA + " where ha < ? and ha > ?", (scale[0], scale[1]))
+            cursor = c.execute(
+                "SELECT ha, haOffset, globalClock, version from HAOffsetTabel where ha > ? and ha < ? and version!=-2",
+                (scale[0], scale[1]))
         else:
-            cursor = c.execute("SELECT dec, decOffset from " + DEC + " where dec < ? and dec > ?", (scale[0], scale[1]))
-        angle, offsets = [], []
+            cursor = c.execute(
+                "SELECT dec, decOffset, globalClock, version from DECOffsetTabel where dec > ? and dec < ? and version!=-2",
+                (scale[0], scale[1]))
+        offset_packages = []
         for row in cursor:
-            angle.append(row[0])
-            offsets.append(row[1])
-        return angle, offsets
+            offset_packages.append([row[0], row[1], row[2], row[3]])
+        return offset_packages
 
-    def writeData(self, haOffset: HAOffset, decOffset: DECOffset):
+    def writeData(self, haOffset: HAOffset, decOffset: DECOffset, globalClock: Times, target: Target):
+        """
+
+        :param haOffset: 记录时角偏移量
+        :param decOffset: 记录赤纬偏移量
+        :param globalClock: 记录该偏移量对应的全局时钟
+        :param target: 记录该偏移量对应的目标
+        :return:
+        """
         c = self.conn.cursor()
         c.execute(
-            "INSERT INTO HAOffsetTabel (ha,haOffset,localTime,version,target) VALUES (?, ?, ?, ?, ?)",
-            (haOffset.ha, haOffset.haOffset, haOffset.localTime.toString(), haOffset.version, haOffset.target.__str__())
+            "INSERT INTO HAOffsetTabel (ha,haOffset,globalClock,version,target) VALUES (?, ?, ?, ?, ?)",
+            (haOffset.ha, haOffset.haOffset, json.dumps(globalClock), haOffset.version,
+             json.dumps(target))
         )
         c.execute(
-            "INSERT INTO DECOffsetTabel (dec,decOffset,localTime,version,target) VALUES (?,?,?,?,?)",
-            (decOffset.dec, decOffset.decOffset, decOffset.localTime.toString(), haOffset.version, haOffset.target.__str__())
+            "INSERT INTO DECOffsetTabel (dec,decOffset,globalClock,version,target) VALUES (?,?,?,?,?)",
+            (decOffset.dec, decOffset.decOffset, json.dumps(globalClock), haOffset.version,
+             json.dumps(target))
         )
         self.conn.commit()

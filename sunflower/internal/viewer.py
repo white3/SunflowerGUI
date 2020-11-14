@@ -8,23 +8,17 @@
 # @version : 0.0.1
 
 from sunflower.internal.calculator import Calculator
-from sunflower.internal.corrector import Corrector
+from sunflower.internal.model.times import Times
 from sunflower.internal.config import Config
 from sunflower.internal.model.target import Target
 
 class Viewer(object):
-    """
-    显示的数据格式：
-    {
-        HA
-        Dec
-        RA
-        HAOffset
-        DecOffset
-        LocalTime
-    }
-    """
     def __init__(self, target: Target, config: Config):
+        """
+
+        :param target: 目标
+        :param config: 配置文件，需要用到经纬度及海拔
+        """
         self.data = {}
         self.target = target
         self.calculator = Calculator(lat=config.getValue(section='location',option='lat'),
@@ -33,6 +27,10 @@ class Viewer(object):
                                      target=self.target)
 
     def getViewData(self):
-        # float(haDegree), float(sunDec), t
-        self.data['HA'], self.data['Dec'], self.data['RA'], self.data['ctime'] = self.calculator.computeLocation()
-        return self.data['HA'], self.data['Dec'], self.data['RA'], self.data['ctime']
+        """
+
+        :return: ha, dec, ra, ctime
+        """
+        self.data['HA'], self.data['Dec'], self.data['RA'], self.data['utc_datetime'] = self.calculator.computeLocation()
+        time = Times(utc=self.data['utc_datetime'])
+        return self.data['HA'], self.data['Dec'], self.data['RA'], time

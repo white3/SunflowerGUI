@@ -5,6 +5,10 @@ from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import pylab as pl
 from sunflower.internal.recorder import Recorder, HA, DEC
+import json
+
+def takeFirst(elem):
+    return elem[1]
 
 
 class Corrector(object):
@@ -15,7 +19,39 @@ class Corrector(object):
         self.recorder = recorder
         self.offsetMap = {}
 
-    def fit(self, x: list, y: list, scale: list):
+    def _cleanDuplicates(self, offset_packages: list):
+        """
+        筛选数据
+
+        :param offset_packages: [[angles: 角度数组, offsets: 误差数组, globalClocks: 全局时钟数组, versions: 版本数组], ]
+        :return:
+        """
+        # 排序
+        offset_packages.sort(key=takeFirst)
+        temp = 1 # 数组之间的差值
+        angles, offsets, global_clock, version = offset_packages[0]
+        # 去重
+        for i in range(1, len(offset_packages)):
+            if angles[i - temp] == offset_packages[i][0]:
+                if version < offset_packages[i][3]:
+                    angles[i - temp] = offset_packages[i][0]
+                    offsets[i - temp] = offset_packages[i][2]
+                elif version > offset_packages[i][3]:
+                    pass
+                else:
+                    if json.load(global_clock) < json.load(offset_packages[i + 1][2]):
+                        angles[i - temp] = offset_packages[i][0]
+                        offsets[i - temp] = offset_packages[i][1]
+                    else:
+                        pass
+                temp += 1
+            else:
+                angles.append(offset_packages[i][0])
+                offsets.append(offset_packages[i][1])
+                global_clock = offset_packages[i][2]
+                version = offset_packages[i][3]
+
+    def _fit(self, x: list, y: list, scale: list):
         """
 
         :param x: x的值的列表
@@ -24,29 +60,63 @@ class Corrector(object):
         :return:
         """
         # 开始拟合
+        temp = []
+        temp.sort(key=x.index)
+        x = temp, temp = []
+        temp.sort(key=y.index)
         variable = np.linspace(scale[0], scale[1], num=scale[2])
         f = interpolate.interp1d(x, y, kind=self.kind, fill_value="extrapolate")
         values = f(variable)
         return np.array(variable), np.array(values)
 
     def changeMod(self, fitmod):
+        """
+
+        :param fitmod: 拟合方式
+        :return:
+        """
         self.fitmod = fitmod
 
     def update(self):
-        has, haOffsets = self.recorder.readData(kind=HA)
-        decs, decOffsets = self.recorder.readData(kind=DEC)
-        self.offsetMap['ha'], self.offsetMap['haOffset'] = self.fit(x=has, y=haOffsets, scale=[-180, 180, 3600])
-        self.offsetMap['dec'], self.offsetMap['decOffset'] = self.fit(x=decs, y=decOffsets, scale=[-90, 90, 1800])
+        """
+        重新生成拟的修正图
+        :return:
+        """
+        # 筛选数据
+        has, haOffsets = self._cleanDuplicates(self.recorder.readData(kind=HA))
+        decs, decOffsets = self._cleanDuplicates(self.recorder.readData(kind=DEC))
+
+        # 拟合数据
+        self.offsetMap['ha'], self.offsetMap['haOffset'] = self._fit(x=has, y=haOffsets, scale=[-180, 180, 3600])
+        self.offsetMap['dec'], self.offsetMap['decOffset'] = self._fit(x=decs, y=decOffsets, scale=[-90, 90, 1800])
 
     def fitHA(self, ha):
-        # 获取差值最小的索引 np.abs(self.offsetMap['ha'] - 6).argmin()
-        # 返回该索引对应的haOffset
+        """
+        获取差值最小的索引 np.abs(self.offsetMap['ha'] - 6).argmin()
+        返回该索引对应的haOffset
+
+        :param ha:
+        :return:
+        """
         return self.offsetMap['haOffset'][np.abs(self.offsetMap['ha'] - ha).argmin()]
 
     def fitDEC(self, dec):
-        # 获取差值最小的索引 np.abs(self.offsetMap['ha'] - 6).argmin()
-        # 返回该索引对应的haOffset
+        """
+        获取差值最小的索引 np.abs(self.offsetMap['ha'] - 6).argmin()
+        返回该索引对应的haOffset
+
+        :param dec:
+        :return:
+        """
         return self.offsetMap['decOffset'][np.abs(self.offsetMap['dec'] - dec).argmin()]
+
+    def show(self):
+        pl.figure(figsize=(10, 10))
+        pl.plot(self.offsetMap['ha'], self.offsetMap['haOffset'], 'ha-haOffset')
+        pl.show()
+        pl.figure(figsize=(10, 10))
+        pl.plot(self.offsetMap['dec'], self.offsetMap['decOffset'], 'dec-decOffset')
+        pl.show()
 
 
 def show_data(dec, offset_dec):
@@ -122,7 +192,7 @@ if __name__ == "__main__":
     offset_ra = [19.0, 19.0, 19.5, 19.25, 19.1, 18.9, 18.9, 18.9, 18.85, 18.85]
     ra_scale = [23, 51]
 
-    fit_test(ra, offset_ra, ra_scale)
+    # fit_test(ra, offset_ra, ra_scale)
     # popt = fourierfit(ra, offset_ra, [20, 50], [18, 20])
     # print("参数如下：")
     # print(popt)

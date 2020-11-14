@@ -7,6 +7,7 @@
 # @Software: PyCharm
 # @version : 0.0.1
 
+# TODO 封装 sqlite base action
 class SqliteUtils(object):
 
     def __init__(self):

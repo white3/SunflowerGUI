@@ -55,7 +55,7 @@ class Calculator(object):
         if ha > 180:
             ha -= 360
 
-        return float(ha), float(sunDec), float(sunRA), t.utc_datetime().astimezone()
+        return float(ha), float(sunDec), float(sunRA), t.utc_datetime()
 
     def setTarget(self, target):
         '''
