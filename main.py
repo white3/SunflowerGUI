@@ -6,10 +6,10 @@
 # @File    : main.py
 # @Software: PyCharm
 # @version : 0.0.1
-from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5 import QtGui, QtWidgets
 import ctypes, sys
 
-from sunflower import *
+from sunflower.internal.window import Window
 
 if __name__ == '__main__':
     app = QtWidgets.QApplication(sys.argv)
@@ -26,7 +26,7 @@ if __name__ == '__main__':
         sys.platform.index('win')
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
         # 加载 图标
-        MainWindow.setWindowIcon(QtGui.QIcon('sunflower/internal/res/favicon.ico'))
+        MainWindow.setWindowIcon(QtGui.QIcon('res/favicon.ico'))
 
         # 加载控制器
         gui.setupSunflower()

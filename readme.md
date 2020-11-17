@@ -1,13 +1,44 @@
 
-## 今日工作
+## 工作2020-11-16 15:45:58
+
+串口控制    https://pythonhosted.org/pyserial/shortintro.html#configuring-ports-later
+
+QList星表   https://blog.csdn.net/jia666666/article/details/81624550
+
+状态信息自动滚动       https://stackoverflow.com/questions/7778726/autoscroll-pyqt-qtextwidget
+
+关于导包问题  项目结构
+
+关于测试问题  单元测试项目结构
+
+总结时间    https://time.is/zh/UTC
+
+## 工作2020-11-15 15:45:58
+
+完成 wasd控制功能
+
+完成 wasd与Correct叠加指向修正
+
+完成 跟踪功能
+
+完成 增加事件进行update拟合的map
+
+！！Target模块——先来一个设置star
+
+## 工作2020-11-14 15:45:58
 
 完成 record   读写，已测试
+
 完成 view     仪表，已测试
+
 完成 correct  代码，未测试  —— 目前是一次读取全部数据，然后拟合出一个map，然后通过map修正指向
 
 还需：
+
 ！！！wasd控制功能
+
 ！！！wasd与Correct叠加指向修正
+
 ！！！跟踪功能
 
 ！！Target模块——先来一个设置star

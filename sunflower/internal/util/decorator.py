@@ -10,6 +10,12 @@
 import functools
 
 
+def debugLog(func):
+    def wrapper(*args, **kw):
+        print("%s(%s) is running" % (func.__name__, kw))
+        return func(*args, **kw)
+    return wrapper
+
 def statusLog(object):
     def decorator(func):
         @functools.wraps(func)
@@ -17,9 +23,7 @@ def statusLog(object):
             print("%s is running" % func.__name__)
             object.displayStatus("%s is running" % func.__name__)
             return func(*args, **kwargs)
-
         return wrapper
-
     return decorator
 
 
@@ -30,7 +34,6 @@ def delayRun(waitTime):
             print("%s is running" % func.__name__)
             # sleep(waitTime)
             return func(*args, **kw)
-
         return wrapper
-
     return decorator
+

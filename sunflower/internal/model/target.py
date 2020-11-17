@@ -1,5 +1,5 @@
 class Target:
-    def __init__(self, tid=None, name="test", isInherent=True, hourAngle=0.0, declination = 0.0, rightAscension = 0.0):
+    def __init__(self, tid=None, name="tests", isInherent=True, hourAngle=0.0, declination = 0.0, rightAscension = 0.0):
         """
 
         :param tid: 目标id号

@@ -10,7 +10,7 @@ from sunflower.internal.model.target import Target
 
 
 class HAOffset(object):
-    def __init__(self, ha: float, haOffset: float, version: int):
+    def __init__(self, ha: float, ha_offset: float, version: int):
         """
         抽象时角误差对象
         :param ha: 时角
@@ -19,7 +19,7 @@ class HAOffset(object):
         :param version: 版本
         :param target: 目标
         """
-        self.ha, self.haOffset, self.version = ha, haOffset, version
+        self.ha, self.ha_offset, self.version = ha, ha_offset, version
 
     def __add__(self, other):
         """
@@ -27,8 +27,11 @@ class HAOffset(object):
         :param other:
         :return:
         """
-        dec_offset = self.haOffset + other.haOffset
-        return DECOffset(dec=self.ha, decOffset=dec_offset, version=self.version)
+        if type(other) is HAOffset:
+            ha_offset = self.ha_offset + other.ha_offset
+            return HAOffset(ha=self.ha, ha_offset=ha_offset, version=self.version)
+        else:
+            return float(other) + self.ha_offset
 
 
 class DECOffset(object):
@@ -49,5 +52,8 @@ class DECOffset(object):
         :param other:
         :return:
         """
-        dec_offset = self.decOffset + other.decOffset
-        return DECOffset(dec=self.dec, decOffset=dec_offset, version=self.version)
+        if type(other) is DECOffset:
+            dec_offset = self.decOffset + other.decOffset
+            return DECOffset(dec=self.dec, decOffset=dec_offset, version=self.version)
+        else:
+            return float(other) + self.decOffset

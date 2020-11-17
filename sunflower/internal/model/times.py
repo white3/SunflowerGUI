@@ -6,8 +6,8 @@
 # @File    : times.py
 # @Software: PyCharm
 # @version : 0.0.1
-from datetime import datetime, date
-import time
+from sunflower.internal.constants import constant
+from datetime import datetime
 import pytz
 import json
 
@@ -19,23 +19,41 @@ class Times(object):
      to 置换为全局时钟，表现形式有：lst, utc, localtime
      TODO: search difference from localtime and lst
     """
-    timezone = None  # 时区
-    stamp = None  # 本地时间戳
-    local = None  # 本地时间
-    lst = None  # 当地时区时间
-    utc = None  # utc时间
+    utc_datetime = None  # utc时间
+
+    def __init__(self, utc=None):
+        """
+
+        :param utc: Universal Time Coordinated datetime.datetime
+        """
+        if utc is None:
+            self.utc_datetime = datetime.utcnow()
+        else:
+            self.utc_datetime = utc
+
+    def toTimestamp(self) -> float:
+        return self.utc_datetime.timestamp()
 
     def toLST(self):
-        # TODO
-        pass
+        """
+        Local Standard Time
+        :return:
+        """
+        return self.utc_datetime.astimezone(pytz.timezone(constant.TIMEZONE))
 
     def toLocalTime(self):
-        # TODO
-        pass
+        """
+        Local Time
+        :return:
+        """
+        return self.utc_datetime.astimezone(pytz.timezone(constant.TIMEZONE))
 
     def toUTC(self):
-        # TODO
-        self.local.toUTC()
+        """
+        Universal Time Coordinated datetime.datetime
+        :return:
+        """
+        return self.utc_datetime.astimezone()
 
     def __gt__(self, other):
         """
@@ -43,10 +61,12 @@ class Times(object):
         :param other:
         :return:
         """
-        if self.stamp > other.stamp:
-            return False
+        if type(other) is Times:
+            return self.utc_datetime.__gt__(other.utc_datetime)
+        elif type(other) is datetime:
+            return self.utc_datetime.__gt__(other)
         else:
-            return True
+            return False
 
     def __lt__(self, other):
         """
@@ -54,46 +74,27 @@ class Times(object):
         :param other:
         :return:
         """
-        if self.stamp < other.stamp:
-            return False
+        # print(type(other))
+        # print(str(other))
+        if type(other) is Times:
+            return self.utc_datetime.__lt__(other.utc_datetime)
+        elif type(other) is datetime:
+            return self.utc_datetime.__lt__(other)
         else:
             return True
 
-    def __init__(self, local=None, utc=None,
-                 lst=None, timezone='Asia/Shanghai', ticks=time.time()):
-        """
-
-        :param local: Local Time
-        :param utc: Universal Time Coordinated
-        :param lst: Local Standard Time
-        """
-        self.timezone = timezone
-        self.stamp = ticks
-        if lst is None:
-            self.lst = datetime.now(pytz.timezone(timezone))
-        else:
-            self.lst = lst
-        if utc is None:
-            self.utc = self.lst.astimezone(pytz.UTC)
-        else:
-            self.utc = utc
-        if local is None:
-            self.local = time.asctime(time.localtime(self.stamp))
-        else:
-            self.local = local
-
-    def to_json(self):
-        return {
-            'timezone': self.timezone,  # 时区
-            'stamp': self.stamp,  # 本地时间戳
-            'local': self.local,  # 本地时间
-            'lst': self.lst,  # 当地时区时间
-            'utc': self.utc  # utc时间
-        }
-
     def __str__(self):
         return "{'LOCAL':'%s','UTC':'%s','LST':'%s', 'timezone', '%s'}" % (
-            self.local, self.utc, self.lst, self.timezone)
+            self.toLocalTime(), self.toUTC(), self.toLST(), constant.TIMEZONE)
+
+
+def timestamp2Times(utc_timestamp) -> Times:
+    """
+
+    :param utc_timestamp: utc datetime
+    :return:
+    """
+    return Times(utc=datetime.utcfromtimestamp(utc_timestamp))
 
 
 class CustomEncoder(json.JSONEncoder):
@@ -114,10 +115,23 @@ def decode_object(o):
     return o
 
 
+#
+# def toJson(time) -> str:
+#     return str(json.dumps(time, cls=CustomEncoder, ensure_ascii=False))
+#
+#
+# def fromJson(json_str: str):
+#     test_time = datetime.utcfromtimestamp(1605347977.211388)
+#     test_times = Times(utc=test_time)
+#     print(temp)
+#     temp = json.loads(json_str, object_hook=decode_object)
+#     print(temp.to_json())
+
+
 if __name__ == '__main__':
-    now = Times()
-    print(now)
-    temp = json.dumps(now, cls=CustomEncoder, ensure_ascii=False)
+    test_time = datetime.utcfromtimestamp(1605347977.211388)
+    test_times = Times(utc=test_time)
+    temp = json.dumps(test_times, cls=CustomEncoder, ensure_ascii=False)
     print(temp)
     temp = json.loads(str(temp), object_hook=decode_object)
     print(temp.to_json())
