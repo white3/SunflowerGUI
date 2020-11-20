@@ -7,7 +7,8 @@
 # @Software: PyCharm
 # @version : 0.0.1
 from sunflower.internal.util.config import Config
-from sunflower.internal.util.sqliteUtils import SqliteUtils
+from sunflower.internal.util.sqlite_utils import SqliteUtils
+import pytz
 
 # 配置文件管理模块
 config = Config()
@@ -20,20 +21,11 @@ HIGH = "#ff0000"
 
 SPEED_MAX = 3600    # 1°
 
-# view
+# flush time
 VIEW_FLUSH_TIME = float(config.getValue(section="view", option="FLUSH_TIME"))
-
-# record
+TRACE_FLUSH_TIME = float(config.getValue(section="trace", option='FLUSH_TIME'))
 RECORD_FLUSH_TIME = float(config.getValue(section="record", option="FLUSH_TIME"))
-
-# >>> ser = serial.Serial()
-# >>> ser.baudrate = 19200
-# >>> ser.port = 'COM1'
-# >>> ser
-# >>> ser.open()
-# >>> ser.is_open
-# >>> ser.close()
-# >>> ser.is_open
+CORRECT_FLUSH_TIME = float(config.getValue(section="correct", option="FLUSH_TIME"))
 
 # serial
 port = config.getValue(section='serial', option='port')
@@ -49,3 +41,5 @@ ELEVATION = float(config.getValue(section='location', option='elevation'))
 
 # time
 TIMEZONE = config.getValue(section='time', option='timezone')
+LOCAL_TIMEZONE = pytz.timezone(TIMEZONE)
+UTC_TIMEZONE = pytz.UTC

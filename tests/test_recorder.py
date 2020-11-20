@@ -7,8 +7,8 @@
 # @Software: PyCharm
 # @version : 0.0.1
 import unittest
-from sunflower.internal.util.recorder import Recorder
-from sunflower.internal.model.offset import HAOffset, DECOffset
+from sunflower.internal.controller.recorder import Recorder
+from sunflower.internal.model.offset import Offset, Offset
 from sunflower.internal.model.target import Target
 from sunflower.internal.model.times import Times
 
@@ -28,8 +28,8 @@ class TestStringMethods(unittest.TestCase):
         for i in range(10):
             localTime = Times()
             target.hourAngle, target.declination = ha[i], dec[i]
-            haOffset = HAOffset(ha=ha[i], ha_offset=offset_ha[i], version=1)
-            decOffset = DECOffset(dec=dec[i], decOffset=offset_dec[i], version=1)
+            haOffset = Offset(angle=ha[i], offset=offset_ha[i], version=1)
+            decOffset = Offset(angle=dec[i], decOffset=offset_dec[i], version=1)
             self.assertEqual(None, self.recorder.writeData(haOffset=haOffset, decOffset=decOffset, globalClock=localTime,
                                                       target=target))
 

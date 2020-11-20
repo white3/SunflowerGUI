@@ -6,5 +6,3 @@
 # @File    : __init__.py.py
 # @Software: PyCharm
 # @version : 0.0.1
-from .target import Target
-from .deviation import deviation

@@ -27,7 +27,7 @@
     - 主程序中的望远镜当前指向的坐标、目标的坐标
     - 用于误差记录时，同时记录观测对象，可用于未来误差数据分析
 - 添加offset.py
-  - class HAOffset(object)，class DECOffset(object)
+  - class Offset(object)，class Offset(object)
     - `__add__`
     - `__init__`
     - `__getattr__`

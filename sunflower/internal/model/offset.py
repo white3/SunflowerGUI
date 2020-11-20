@@ -7,19 +7,20 @@
 # @Software: PyCharm
 # @version : 0.0.1
 from sunflower.internal.model.target import Target
+from copy import copy, deepcopy
 
 
-class HAOffset(object):
-    def __init__(self, ha: float, ha_offset: float, version: int):
+class Offset(object):
+    def __init__(self, angle: float, offset: float, version: int):
         """
         抽象时角误差对象
-        :param ha: 时角
+        :param angle: 时角
         :param haOffset: 时角误差
         :param localTime: 本地时间
         :param version: 版本
         :param target: 目标
         """
-        self.ha, self.ha_offset, self.version = ha, ha_offset, version
+        self.angle, self.offset, self.version = angle, offset, version
 
     def __add__(self, other):
         """
@@ -27,33 +28,25 @@ class HAOffset(object):
         :param other:
         :return:
         """
-        if type(other) is HAOffset:
-            ha_offset = self.ha_offset + other.ha_offset
-            return HAOffset(ha=self.ha, ha_offset=ha_offset, version=self.version)
+        if type(other) is Offset:
+            offset = self.offset + other.offset
+            return Offset(angle=self.angle, offset=offset, version=self.version)
         else:
-            return float(other) + self.ha_offset
+            return float(other) + self.offset
 
+    def __str__(self):
+        return "%d - %f %f %d" % (id(self), self.angle, self.offset, self.version)
 
-class DECOffset(object):
-    def __init__(self, dec: float, decOffset: float, version: int):
-        """
-        抽象赤纬误差对象
-        :param dec: 赤纬
-        :param decOffset: 赤纬误差
-        :param localTime: 本地时间
-        :param version: 版本
-        :param target: 目标
-        """
-        self.dec, self.decOffset, self.version = dec, decOffset, version
+    def __copy__(self):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        result.__dict__.update(self.__dict__)
+        return result
 
-    def __add__(self, other):
-        """
-        误差相加
-        :param other:
-        :return:
-        """
-        if type(other) is DECOffset:
-            dec_offset = self.decOffset + other.decOffset
-            return DECOffset(dec=self.dec, decOffset=dec_offset, version=self.version)
-        else:
-            return float(other) + self.decOffset
+    def __deepcopy__(self, memo):
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            setattr(result, k, deepcopy(v, memo))
+        return result

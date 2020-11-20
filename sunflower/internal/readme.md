@@ -22,7 +22,7 @@
   - class Recorder(object)
     - `__init__(self)`
     - readData(self, scale=[-180, 180], kind=HA)
-    - writeData(self, haOffset: HAOffset, decOffset: DECOffset, globalClock: Times, target: Target)
+    - writeData(self, haOffset: Offset, decOffset: Offset, globalClock: Times, target: Target)
   - 用于封装误差记录器功能
 - 添加viewer.py
   - class View(object)

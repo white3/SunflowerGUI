@@ -8,7 +8,6 @@
 # @version : 0.0.1
 from sunflower.internal.constants import constant
 from datetime import datetime
-import pytz
 import json
 
 
@@ -19,7 +18,6 @@ class Times(object):
      to 置换为全局时钟，表现形式有：lst, utc, localtime
      TODO: search difference from localtime and lst
     """
-    utc_datetime = None  # utc时间
 
     def __init__(self, utc=None):
         """
@@ -30,6 +28,7 @@ class Times(object):
             self.utc_datetime = datetime.utcnow()
         else:
             self.utc_datetime = utc
+        self.utc_datetime = self.utc_datetime.replace(tzinfo=constant.UTC_TIMEZONE)
 
     def toTimestamp(self) -> float:
         return self.utc_datetime.timestamp()
@@ -39,21 +38,21 @@ class Times(object):
         Local Standard Time
         :return:
         """
-        return self.utc_datetime.astimezone(pytz.timezone(constant.TIMEZONE))
+        return self.utc_datetime.astimezone(constant.LOCAL_TIMEZONE)
 
     def toLocalTime(self):
         """
         Local Time
         :return:
         """
-        return self.utc_datetime.astimezone(pytz.timezone(constant.TIMEZONE))
+        return self.utc_datetime.astimezone(constant.LOCAL_TIMEZONE)
 
     def toUTC(self):
         """
         Universal Time Coordinated datetime.datetime
         :return:
         """
-        return self.utc_datetime.astimezone()
+        return self.utc_datetime.astimezone(constant.UTC_TIMEZONE)
 
     def __gt__(self, other):
         """

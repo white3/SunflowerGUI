@@ -122,7 +122,7 @@ class Communicator(object):
     @debugLog
     def point(self, ha, dec):
         """
-        追踪坐标 ha、dec
+        追踪坐标 angle、angle
 
         :param ha:
         :param dec:
