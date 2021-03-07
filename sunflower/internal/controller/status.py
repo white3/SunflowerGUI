@@ -44,6 +44,7 @@ def status_log(status, color=constant.LOW):
                 return func(*args, **kwargs)
             except Exception as e:
                 if setup_display:
+                    print(e)
                     display_status(e, color)
                 print(e)
 

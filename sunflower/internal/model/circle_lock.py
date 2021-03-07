@@ -12,6 +12,7 @@ import threading
 class CircleLock(object):
     _lock = threading.Condition()
     _waiting_writers = 0
+    _waiting_readers = 0
     _readers = 0
     _writing_writers = 0
     _prefer_writer = True
@@ -44,7 +45,7 @@ class CircleLock(object):
         with self._lock:
             self._waiting_writers += 1
             try:
-                while self._writing_writers > 0 or self._prefer_writer and self._waiting_writers > 0:
+                while self._writing_writers > 0 or not self._prefer_writer and self._waiting_readers > 0:
                     self._lock.wait()
                 self._writing_writers += 1
             finally:

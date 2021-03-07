@@ -13,11 +13,11 @@ from sunflower.internal.util.decorator import debugLog
 
 
 class Communicator(object):
-    INSERT_POWER = '7B 00 40 7D 0D 0A 4F'  # 驱动上电
-    DROP_POWER = '7B 00 41 7D 0D 0A 50'  # 驱动断电
-    # INSERT_POWER = '7B 01 40 7D 0D 0A 50'  # connect
-    # DROP_POWER = '7B 01 41 7D 0D 0A 51'  # disconnect
-    RESET = '7B 00 42 7D 0D 0A 51'
+    # INSERT_POWER = '7B 00 40 7D 0D 0A 4F'  # 驱动上电
+    INSERT_POWER = '7B 01 40 7D 0D 0A 50'
+    # DROP_POWER = '7B 00 41 7D 0D 0A 50'  # 驱动断电
+    DROP_POWER = '7B 01 41 7D 0D 0A 51'
+    RESET = '7B 01 42 7D 0D 0A 52'  # 已废弃
     POSITION = '7B 01 13 7D 0D 0A 23'  # read position
     STOP = '7B 01 47 7D 0D 0A 57'  # stop move
     isConnect = False  # 是否连接
@@ -68,7 +68,8 @@ class Communicator(object):
         发送上电指令, 并保持与电机的连接
         :return:
         """
-        bytesCommandCode = bytes.fromhex(self.INSERT_POWER).decode('utf-8')
+        bytesCommandCode = bytes.fromhex(self.INSERT_POWER)
+        # .decode('utf-8')
         self.__send(bytesCommandCode=bytesCommandCode)
         rMsg = self.__receieve()
         rgMsg = self.__receieve()
@@ -119,6 +120,8 @@ class Communicator(object):
         self.__receieve()  # invalid data
         self.__receieve()  # invalid data
 
+
+
     @debugLog
     def point(self, ha, dec):
         """
@@ -141,7 +144,6 @@ class Communicator(object):
         :param comd:
         :return: 校验码
         '''
-
         comdd = comd.replace(" ", "")
         va = 0
         for it in range(2, len(comdd) + 2, 2):
@@ -149,6 +151,27 @@ class Communicator(object):
         vaStr = str(hex(va))
         v_value = vaStr[-2:]
         return v_value.upper()
+
+    def warm_telescope(self, ha=0, dec=0):
+        """
+        1. 最低速度 从天顶 -> 最左边 -> 最右边 -> 天顶 -> 最高 -> 最低 -> 天顶
+        0 47.8 -> 0 42.8 天顶
+        低速下转        7B 01 43 34 01 7D 0D 0A 88
+        低速上转        7B 01 43 34 02 7D 0D 0A 89
+        低速顺转        7B 01 43 34 03 7D 0D 0E 8F
+        低速逆转        7B 01 43 34 04 7D 0D 0E 90
+        :return:
+        """
+        if ha == 1:
+            hexCommandCode = "7B 01 43 34 03 7D 0D 0E 8F"
+        elif ha ==-1:
+            hexCommandCode = "7B 01 43 34 04 7D 0D 0E 90"
+        elif dec == 1:
+            hexCommandCode = "7B 01 43 34 02 7D 0D 0A 89"
+        elif dec == -1:
+            hexCommandCode = "7B 01 43 34 01 7D 0D 0A 88"
+        bytesCommandCode = bytes.fromhex("7B 00 44 41 31 2B 30 39 30 2E 30 30 45 30 2B 30 35 30 2E 30 30 7D 0D 0A DA")
+        self.__send(bytesCommandCode=bytesCommandCode)
 
     @debugLog
     def commdSpwOr(self, speed: int, orient: str):
@@ -267,6 +290,11 @@ class Communicator(object):
             else:
                 print('input num to str error')
 
+    def low_location(self):
+        hexCommandCode = self.__generateComd(-90, -42.8, True, True)
+        bytesCommandCode = bytes.fromhex(hexCommandCode)
+        self.__send(bytesCommandCode=bytesCommandCode)
+
     @debugLog
     def reset(self):
         """
@@ -276,6 +304,6 @@ class Communicator(object):
         # bytesCommandCode = bytes.fromhex(self.RESET)
         # self.__send(bytesCommandCode=bytesCommandCode)
 
-        hexCommandCode = self.__generateComd(0, 42.8, True, True)
+        hexCommandCode = self.__generateComd(0.5, 42.8, True, True)
         bytesCommandCode = bytes.fromhex(hexCommandCode)
         self.__send(bytesCommandCode=bytesCommandCode)

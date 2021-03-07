@@ -26,10 +26,12 @@ VIEW_FLUSH_TIME = float(config.getValue(section="view", option="FLUSH_TIME"))
 TRACE_FLUSH_TIME = float(config.getValue(section="trace", option='FLUSH_TIME'))
 RECORD_FLUSH_TIME = float(config.getValue(section="record", option="FLUSH_TIME"))
 CORRECT_FLUSH_TIME = float(config.getValue(section="correct", option="FLUSH_TIME"))
-
+DETECT_FLUSH_TIME = float(config.getValue(section="serial", option="DETECT_FLUSH_TIME"))
+SERIAL_FLUSH_TIME = float(config.getValue(section="serial", option="SERIAL_FLUSH_TIME"))
 # serial
 port = config.getValue(section='serial', option='port')
 baudrate = int(config.getValue(section='serial', option='baudrate'))
+timeout = float(config.getValue(section='serial', option='timeout'))
 
 # offset
 version = int(config.getValue(section='offset', option='version'))

@@ -206,7 +206,7 @@ QPushButton:pressed
 </string>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="controlModuleTabWidget">
        <attribute name="title">
@@ -488,6 +488,38 @@ border: 2px solid #707070;</string>
          <string>L</string>
         </property>
        </widget>
+       <widget class="QPushButton" name="initButton">
+        <property name="geometry">
+         <rect>
+          <x>400</x>
+          <y>80</y>
+          <width>111</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>望远镜预热</string>
+        </property>
+        <property name="shortcut">
+         <string>O</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="lowLocationButton">
+        <property name="geometry">
+         <rect>
+          <x>400</x>
+          <y>20</y>
+          <width>111</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>移至低位</string>
+        </property>
+        <property name="shortcut">
+         <string>O</string>
+        </property>
+       </widget>
       </widget>
       <widget class="QWidget" name="starmapModuleTabWidget">
        <attribute name="title">
@@ -618,6 +650,11 @@ border: 2px solid #707070;</string>
       <widget class="QWidget" name="tab">
        <attribute name="title">
         <string>Correction</string>
+       </attribute>
+      </widget>
+      <widget class="QWidget" name="tab_2">
+       <attribute name="title">
+        <string>页</string>
        </attribute>
       </widget>
      </widget>

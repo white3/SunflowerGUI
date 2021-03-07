@@ -62,7 +62,9 @@ class ThreadMeta(object):
         while True:
             # if traceFlag is True, the doTrace thread will wait for notification
             if self.__flag:
+                print("stop")
                 if self.__isExiting:
+                    print("exit")
                     break
                 # 自我睡眠
                 try:

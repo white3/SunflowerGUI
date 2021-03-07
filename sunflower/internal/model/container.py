@@ -8,7 +8,12 @@
 # @version : 0.0.1
 from sunflower.internal.model.circle_lock import CircleLock
 from copy import copy, deepcopy
+from sunflower.internal.model.circle_lock import CircleLock
 
+
+class ConcurrentMeta(object):
+    def __init__(self):
+        self.condition = CircleLock()
 
 class ConcurrentDataContainer(dict):
     """
