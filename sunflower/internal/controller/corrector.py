@@ -78,7 +78,7 @@ class Corrector(object):
         self.recorder = recorder
         self.offsetMap = {}
 
-    def _cleanDuplicates(self, offset_packages: list):
+    def cleanDuplicates(self, offset_packages: list):
         """
         筛选数据
 
@@ -142,8 +142,8 @@ class Corrector(object):
         # 筛选数据
         ha_list = self.recorder.readData(kind=HA)
         dec_list = self.recorder.readData(kind=DEC, scale=(-90, 90))
-        has, haOffsets = self._cleanDuplicates(ha_list)
-        decs, decOffsets = self._cleanDuplicates(dec_list)
+        has, haOffsets = self.cleanDuplicates(ha_list)
+        decs, decOffsets = self.cleanDuplicates(dec_list)
 
         self.offsetMap['ha'], self.offsetMap['haOffset'] = self.__fit(x=has, y=haOffsets, scale=[-180, 180, 3600])
         self.show(x=self.offsetMap['ha'], y=self.offsetMap['haOffset'], title='ro')

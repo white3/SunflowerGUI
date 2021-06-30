@@ -7,7 +7,6 @@
 # @Software: PyCharm
 # @version : 0.0.1
 from sunflower.internal.constants import constant
-from sunflower.internal.meta import interruptible_thread
 from PyQt5.QtWidgets import QApplication
 from sunflower.internal.controller import status
 import time

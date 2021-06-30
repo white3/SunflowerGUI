@@ -89,7 +89,6 @@ class Window(object):
         #         'updateCorrectionButton': self.ui_form.updateCorrectionButton,
         #     }, data=self.container)
 
-        #
         # 初始化串口模块, 运行串口探活线程
         self.serialController = SerialController(view={
             # 'ser': self.ser,
