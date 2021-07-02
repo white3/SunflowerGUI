@@ -11,6 +11,8 @@ from scipy import interpolate
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import pylab as pl
+
+from sunflower.internal.controller.controller import ConController
 from sunflower.internal.controller.recorder import Recorder, HA, DEC
 from sunflower.internal.meta import interruptible_thread
 from sunflower.internal.constants import constant
@@ -22,7 +24,7 @@ def takeFirst(elem):
     return elem[0]
 
 
-class CorrectorController(interruptible_thread.ThreadMeta):
+class CorrectorController(ConController):
 
     @status.status_log("Setup corrector controller", constant.MEDIUM)
     def __init__(self, **kwargs):
@@ -32,9 +34,9 @@ class CorrectorController(interruptible_thread.ThreadMeta):
         self.isCorrect = False  # 是否开启指向修正
         self.recorder = Recorder()
         self.corrector = Corrector(recorder=self.recorder)
-        self.view['correctButton'].clicked.connect(self.correct)
-        self.view['updateCorrectionButton'].clicked.connect(self.corrector.update)
-        self.work()
+        self.view.correctButton.clicked.connect(self.correct)
+        self.view.updateCorrectionButton.clicked.connect(self.corrector.update)
+        # self.work()
 
     # @status.status_log("开始修正", constant.MEDIUM)
     def correct(self):

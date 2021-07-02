@@ -10,6 +10,7 @@
 
 import functools
 import pprint
+import traceback
 
 from PyQt5.QtCore import QDateTime
 from sunflower.internal.constants import constant
@@ -41,12 +42,12 @@ def status_log(status, color=constant.LOW):
                 print("function: %s" % (func.__name__))
                 pprint.pprint(args)
                 pprint.pprint(kwargs)
+                print()
                 return func(*args, **kwargs)
-            except Exception as e:
+            except Exception:
                 if setup_display:
-                    print(e)
-                    display_status(e, color)
-                print(e)
+                    display_status(traceback.format_exc(), color)
+                print(traceback.format_exc())
 
         return wrapper
 

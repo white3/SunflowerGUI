@@ -22,7 +22,13 @@ class ThreadMeta(object):
         self.__isExiting = False  # False表示不退出，True 表示退出
         self.__workThread = threading.Thread(target=self.__working, daemon=True)
         self.__workThread.start()
-        # time.sleep(1)
+
+    def setup(self) -> bool:
+        """
+        常用于执行启动前, 加载一些变量, 返回值表示是否直接启动, 默认不启动, 主要用于时间驱动型启动
+        :return: True 表示直接启动, False 表示不直接启动
+        """
+        return False
 
     def run(self):
         """
@@ -69,6 +75,7 @@ class ThreadMeta(object):
                 # 自我睡眠
                 try:
                     self.__isRunning.acquire()
+                    self.__isRunning.notify()
                     self.__isRunning.wait()
                 finally:
                     self.__isRunning.release()

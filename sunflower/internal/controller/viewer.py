@@ -6,8 +6,10 @@
 # @File    : viewer.py
 # @Software: PyCharm
 # @version : 0.0.1
+import traceback
 
 from sunflower.internal.constants import constant
+from sunflower.internal.controller.controller import ConController
 from sunflower.internal.util.calculator import Calculator
 from sunflower.internal.model.times import Times
 from sunflower.internal.meta import interruptible_thread
@@ -15,7 +17,7 @@ from sunflower.internal.controller import status
 import time
 
 
-class Viewer(interruptible_thread.ThreadMeta):
+class Viewer(ConController):
 
     @status.status_log("init Viewer", constant.MEDIUM)
     def __init__(self, **kwargs):
@@ -30,8 +32,14 @@ class Viewer(interruptible_thread.ThreadMeta):
         self.calculator = Calculator(lat=constant.LAT,
                                      lon=constant.LON,
                                      elevation=constant.ELEVATION,
-                                     target=self.data['target'])
-        self.run()
+                                     target=self.data.get('target'))
+
+    def setup(self) -> bool:
+        """
+        执行启动前
+        :return: True 表示直接启动, False 表示不直接启动
+        """
+        return True
 
     def work(self):
         """
@@ -39,43 +47,29 @@ class Viewer(interruptible_thread.ThreadMeta):
         :return:
         """
         # display target position
-        self.data['conditions']['target'].write_lock()
+        ha, dec, ra, utc_datetime = self.calculator.computeLocation()
         try:
-            self.data['target'].hourAngle, self.data['target'].declination, self.data[
-                'target'].rightAscension, utc_datetime = self.calculator.computeLocation()
-            self.view['haLcdNumber'].display(self.data['target'].hourAngle)
-            self.view['decLcdNumber'].display(self.data['target'].declination)
-            self.view['raLcdNumber'].display(self.data['target'].rightAscension)
-        finally:
-            self.data['conditions']['target'].write_unlock()
+            target, lock = self.data.get('target', lock=True)
+            lock.acquire(timeout=1)
+            target.hourAngle, target.declination, target.rightAscension = ha, dec, ra
+            lock.release()
+        except Exception:
+            print(traceback.format_exc())
+        self.view.haLcdNumber.display(ha)
+        self.view.decLcdNumber.display(dec)
+        self.view.raLcdNumber.display(ra)
 
-        self.data['conditions']['globalClock'].write_lock()
-        try:
-            self.data['globalClock'] = Times(utc=utc_datetime)
-            self.view['utcDateTimeEdit'].setDateTime(self.data['globalClock'].toUTC())
-            self.view['localtimeDateTimeEdit'].setDateTime(self.data['globalClock'].toLocalTime())
-            self.view['lstDateTimeEdit'].setDateTime(self.data['globalClock'].toLST())
-        finally:
-            self.data['conditions']['globalClock'].write_unlock()
+        self.data.set('globalClock', Times(utc=utc_datetime))
+        self.view.utcDateTimeEdit.setDateTime(self.data.get('globalClock').toUTC())
+        self.view.localtimeDateTimeEdit.setDateTime(self.data.get('globalClock').toLocalTime())
+        self.view.lstDateTimeEdit.setDateTime(self.data.get('globalClock').toLST())
 
         # display correction
-        self.data['conditions']['decOffset'].read_lock()
-        try:
-            self.view['decOffsetLcdNumber'].display(self.data['decOffset'].offset)
-        finally:
-            self.data['conditions']['decOffset'].read_unlock()
-
-        self.data['conditions']['haOffset'].read_lock()
-        try:
-            self.view['haOffsetLcdNumber'].display(self.data['haOffset'].offset)
-        finally:
-            self.data['conditions']['haOffset'].read_unlock()
+        self.view.decOffsetLcdNumber.display(self.data.get('decOffset').offset)
+        self.view.haOffsetLcdNumber.display(self.data.get('haOffset').offset)
 
         # display telescope position
-        self.data['conditions']['currentDirecting'].read_lock()
-        try:
-            self.view['telescopeHALcdNumber'].display(self.data['currentDirecting'].hourAngle)
-            self.view['telescopeDecLcdNumber'].display(self.data['currentDirecting'].declination)
-        finally:
-            self.data['conditions']['currentDirecting'].read_unlock()
-            time.sleep(constant.VIEW_FLUSH_TIME)
+        self.view.telescopeHALcdNumber.display(self.data.get('currentDirecting').hourAngle)
+        self.view.telescopeDecLcdNumber.display(self.data.get('currentDirecting').declination)
+        time.sleep(constant.VIEW_FLUSH_TIME)
+        print(ha, dec, ra)

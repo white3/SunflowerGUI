@@ -6,6 +6,7 @@
 # @File    : recorder.py
 # @Software: PyCharm
 # @version : 0.0.1
+from sunflower.internal.controller.controller import ConController
 from sunflower.internal.model.offset import Offset
 from sunflower.internal.model.times import Times, timestamp2Times
 from sunflower.internal.model.target import Target
@@ -27,13 +28,13 @@ class CustomEncoder(json.JSONEncoder):
         return {'__{}__'.format(o.__class__.__name__): o.__dict__}
 
 
-class RecorderController(interruptible_thread.ThreadMeta):
+class RecorderController(ConController):
 
     @status.status_log("init RecorderController", constant.MEDIUM)
     def __init__(self, **kwargs):
         interruptible_thread.ThreadMeta.__init__(self)
         self.view = kwargs['view']
-        self.view['recordButton'].clicked.connect(self.record)
+        self.view.recordButton.clicked.connect(self.record)
         self.data = kwargs['data']
         self.recorder = Recorder()  # 配置记录器
         self.isRecording = False
@@ -42,12 +43,12 @@ class RecorderController(interruptible_thread.ThreadMeta):
         if self.isRecording:
             self.isRecording = False
             self.wait()
-            self.view['recordButton'].setText("记录误差")
+            self.view.recordButton.setText("记录误差")
             status.display_status("停止记录", constant.MEDIUM)
         else:
             self.isRecording = True
             self.run()
-            self.view['recordButton'].setText("停止记录")
+            self.view.recordButton.setText("停止记录")
             status.display_status("开始记录", constant.MEDIUM)
 
     def work(self):
@@ -56,10 +57,10 @@ class RecorderController(interruptible_thread.ThreadMeta):
         :return:
         """
         time.sleep(constant.RECORD_FLUSH_TIME)
-        ha_offset = copy.deepcopy(self.data['haOffset'])
-        dec_offset = copy.deepcopy(self.data['decOffset'])
-        target = copy.deepcopy(self.data['target'])
-        global_clock = copy.deepcopy(self.data['globalClock'])
+        ha_offset = copy.deepcopy(self.data.get('haOffset'))
+        dec_offset = copy.deepcopy(self.data.get('decOffset'))
+        target = copy.deepcopy(self.data.get('target'))
+        global_clock = copy.deepcopy(self.data.get('globalClock'))
         self.recorder.writeData(haOffset=ha_offset, decOffset=dec_offset,
                                 target=target,
                                 globalClock=global_clock)

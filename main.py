@@ -6,6 +6,8 @@
 # @File    : main.py
 # @Software: PyCharm
 # @version : 0.0.1
+import traceback
+
 from PyQt5 import QtGui, QtWidgets
 import ctypes, sys
 
@@ -34,5 +36,5 @@ if __name__ == '__main__':
         # 显示 GUI
         MainWindow.show()
         sys.exit(app.exec_())
-    except Exception as e:
-        print(e.with_traceback())
+    except Exception:
+        print(traceback.format_exc())

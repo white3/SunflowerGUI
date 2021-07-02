@@ -18,8 +18,8 @@ class TestCommunicator(unittest.TestCase):
     ser = serial.Serial(port=constant.port, timeout=constant.timeout, baudrate=constant.baudrate)
 
     def test_insert_power(self):
-        c = Communicator(serialChannel=self.ser)
-        self.assertTrue(True, c.insert_power())
+        c = Communicator(serial_channel=self.ser)
+        self.assertTrue(True, c.open_power())
 
 
 if __name__ == '__main__':

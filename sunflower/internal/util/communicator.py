@@ -9,47 +9,90 @@
 
 import serial
 import time
+from setting import commands, frame_code
+import threading
 from sunflower.internal.util.decorator import debugLog
+
+FSB = frame_code['FSB']
+ADB = frame_code['ADB']
+FEB = frame_code['FEB']
+ENB = frame_code['ENB']
+
+
+def append_verify_code(code):
+    """
+    生成校验码
+
+    :param code:
+    :return: 校验码
+    """
+    temp = code.replace(" ", "")
+    va = 0
+    for it in range(2, len(temp) + 2, 2):
+        va = va + int(temp[it - 2:it], 16)
+    v_value = str(hex(va))[-2:]
+    return "%s %s" % (code, v_value.upper())
 
 
 class Communicator(object):
-    # INSERT_POWER = '7B 00 40 7D 0D 0A 4F'  # 驱动上电
-    INSERT_POWER = '7B 01 40 7D 0D 0A 50'
-    # DROP_POWER = '7B 00 41 7D 0D 0A 50'  # 驱动断电
-    DROP_POWER = '7B 01 41 7D 0D 0A 51'
-    RESET = '7B 01 42 7D 0D 0A 52'  # 已废弃
-    POSITION = '7B 01 13 7D 0D 0A 23'  # read position
-    STOP = '7B 01 47 7D 0D 0A 57'  # stop move
-    isConnect = False  # 是否连接
-    isElectric = False  # 是否上电
-    serialChannel = None  # 串口通信通道
 
-    def __init__(self, serialChannel: serial.Serial):
+    def __init__(self, serial_channel: serial.Serial):
         """
-        配置串口, 这里会直接进行串口连接
-        :param comNumber: 串口号
-        :param freq: 串口频率
+        配置串口
+        :param serial_channel: 串口对象
         :return:
         """
-        self.serialChannel = serialChannel
+        commands['by上'] = self.reset
+        self.commands = {
+            '驱动上电': self.open_power,
+            '驱动断电': self.drop_power,
+            '查询': self.get_position,
+            '收藏': self.reset,
+            '转至低位': self.low_location,
+        }
+        # 是否连接
+        self.is_connect = False
+        # 是否上电
+        self.is_electric = False
+        # 串口通信通道
+        self.serial_channel = serial_channel
+        self.__cmd_lock = threading.Condition()
+        self.DROP_POWER = append_verify_code("%s %s %s %s %s" % (
+            FSB, ADB, commands['驱动断电'], FEB, ENB))
+
+        self.OPEN_POWER = append_verify_code("%s %s %s %s %s" % (
+            FSB, ADB, commands['驱动上电'], FEB, ENB))
+
+        self.POSITION = append_verify_code("%s %s %s %s %s" % (
+            FSB, ADB, commands['查询'], FEB, ENB))
 
     def __del__(self):
         """
         发送急停后, 再发送断电指令, 并断开连接
         :return:
         """
-        # self.stop()
         self.drop_power()
         print("Security close connection.")
 
-    @debugLog
-    def isConnect(self):
+    def rpc_exec(self, key: str):
         """
-        返回本机COM口连接状态
+        查阅文档, 复位指令即为 复位
+        新增指令: ['低速上转', '中速上转', '高速上转', '低速下转', '中速下转', '高速下转',
+                '低速顺转', '中速顺转', '高速顺转', '低速逆转', '中速逆转', '高速逆转',
+                '停转', ]
 
+        :param key:
         :return:
         """
-        return self.isConnect
+        if self.commands[key]:
+            self.commands[key]()
+        else:
+            # 'FSB ADB CMB FEB ENB PAR'
+            frame = "%s %s %s %s %s" % (FSB, ADB, commands[key], FEB, ENB)
+            rpc_code = bytes.fromhex(frame + ' ' + self.__verify_code(frame))
+            self.__send(rpc_code)
+            self.__receieve()  # invalid data
+            self.__receieve()  # invalid data
 
     @debugLog
     def drop_power(self):
@@ -57,87 +100,84 @@ class Communicator(object):
         发送断电指令, 并断开与电机的连接
         :return:
         """
-        bytesCommandCode = bytes.fromhex(self.DROP_POWER)
-        self.__send(bytesCommandCode=bytesCommandCode)
-        self.serialChannel.close()
-        self.isConnect = False
+        byte_code = bytes.fromhex(self.DROP_POWER)
+        self.__send(byte_code=byte_code)
+        self.serial_channel.close()
+        self.is_connect = False
 
     @debugLog
-    def insert_power(self):
+    def open_power(self):
         """
         发送上电指令, 并保持与电机的连接
         :return:
         """
-        bytesCommandCode = bytes.fromhex(self.INSERT_POWER)
+        byte_code = bytes.fromhex(self.OPEN_POWER)
         # .decode('utf-8')
-        self.__send(bytesCommandCode=bytesCommandCode)
+        self.__send(byte_code=byte_code)
         rMsg = self.__receieve()
         rgMsg = self.__receieve()
         print(rMsg)
         print(rgMsg)
-        ##tests do check##
-        # tM=b'7B 01 40 O K 7D 0D 0A'
-        # if 'O' in str(tM) and 'K' in str(tM):
-        #     print('OK')
         if 'O' in str(rMsg) and 'K' in str(rMsg):
-            self.isConnect = True
+            self.is_connect = True
             return True
         else:
             return False
 
-    # @debugLog
-    def getPosition(self, isDisp=True):
+    def get_position(self):
         '''
         :param isDisp: 是否通过print输出
         :return: Hourangle, declination
         '''
-        # print('sys back', self.serialChannel.readline())
-        bytesCommandCode = bytes.fromhex(self.POSITION)
-        self.__send(bytesCommandCode=bytesCommandCode)
+        byte_code = bytes.fromhex(self.POSITION)
+        self.__send(byte_code=byte_code)
         teleMsg = self.__receieve()
         self.__receieve()
 
-        # teleMsg shoulde be remove 'com_begin' and 'com_end = '7D 0D 0A'
-        # print('tele location msg: ', teleMsg)
         locaStr = bytes.decode(teleMsg, encoding='cp1252')
         sysPos = locaStr[3:-7]
 
         HA = sysPos[0:7]
         Dec = sysPos[7:-1]
-        if isDisp:
-            print('tele location in sys is HA :', HA, '  Dec :', Dec)
         return float(HA), float(Dec)
 
-    @debugLog
-    def stop(self):
+    def low_location(self):
         """
-        发送急停指令
-
+        降低到低位
         :return:
         """
-        bytesCommandCode = bytes.fromhex(self.STOP)
-        self.__send(bytesCommandCode)
-        self.__receieve()  # invalid data
-        self.__receieve()  # invalid data
-
-
+        hex_code = self.__data_guide(-90, -42.8, True, True)
+        byte_code = bytes.fromhex(hex_code)
+        self.__send(byte_code=byte_code)
 
     @debugLog
-    def point(self, ha, dec):
+    def reset(self):
         """
-        追踪坐标 angle、angle
-
-        :param ha:
-        :param dec:
+        望远镜视向置为 0,47.8
         :return:
         """
-        hexCommandCode = self.__generateComd(ha, dec, True, True)
-        bytesCommandCode = bytes.fromhex(hexCommandCode)
-        self.__send(bytesCommandCode)
+        hex_code = self.__data_guide(0.5, 42.8, True, True)
+        byte_code = bytes.fromhex(hex_code)
+        self.__send(byte_code=byte_code)
+
+    @debugLog
+    def track(self, ha, dec):
+        """
+        追踪坐标
+
+        :param ha: 时角, 度
+        :param dec: 赤纬, 度
+        :return:
+        """
+        hex_code = self.__data_guide(ha, dec, True, True)
+        byte_code = bytes.fromhex(hex_code)
+        self.__send(byte_code)
+        # 文档提到需 200ms 间隙
+        time.sleep(0.2)
         self.__receieve()  # invalid data
         self.__receieve()  # invalid data
 
-    def verifyCode(self, comd):
+    def __verify_code(self, comd):
         '''
         生成校验码
 
@@ -150,74 +190,21 @@ class Communicator(object):
             va = va + int(comdd[it - 2:it], 16)
         vaStr = str(hex(va))
         v_value = vaStr[-2:]
+        print(v_value)
         return v_value.upper()
 
-    def warm_telescope(self, ha=0, dec=0):
-        """
-        1. 最低速度 从天顶 -> 最左边 -> 最右边 -> 天顶 -> 最高 -> 最低 -> 天顶
-        0 47.8 -> 0 42.8 天顶
-        低速下转        7B 01 43 34 01 7D 0D 0A 88
-        低速上转        7B 01 43 34 02 7D 0D 0A 89
-        低速顺转        7B 01 43 34 03 7D 0D 0E 8F
-        低速逆转        7B 01 43 34 04 7D 0D 0E 90
-        :return:
-        """
-        if ha == 1:
-            hexCommandCode = "7B 01 43 34 03 7D 0D 0E 8F"
-        elif ha ==-1:
-            hexCommandCode = "7B 01 43 34 04 7D 0D 0E 90"
-        elif dec == 1:
-            hexCommandCode = "7B 01 43 34 02 7D 0D 0A 89"
-        elif dec == -1:
-            hexCommandCode = "7B 01 43 34 01 7D 0D 0A 88"
-        bytesCommandCode = bytes.fromhex("7B 00 44 41 31 2B 30 39 30 2E 30 30 45 30 2B 30 35 30 2E 30 30 7D 0D 0A DA")
-        self.__send(bytesCommandCode=bytesCommandCode)
-
-    @debugLog
-    def commdSpwOr(self, speed: int, orient: str):
-        """
-        使望远镜以speed的速度向orient方向移动
-
-        :param speed:
-        :param orient:
-        :return:
-        """
-        com_begin = '7B 01 43'
-        com_end = '7D 0D 0A'
-        orient_Str = '31'
-        if orient == 'CW':
-            orient_Str = '31'
-        elif orient == 'CCW':
-            orient_Str = '32'
-        elif orient == 'UP':
-            orient_Str = '33'
-        elif orient == 'DOWN':
-            orient_Str = '34'
-
-        speed_Str = '0' + str(speed)
-
-        comd_c = com_begin + ' ' + orient_Str + ' ' + speed_Str + ' ' + com_end
-        vrc = self.verifyCode(comd_c)
-
-        comd_full = comd_c + ' ' + vrc
-        # print('comf:',comd_full)
-        bytesCommandCode = bytes.fromhex(comd_full)
-        # encode 'ISO-8859-1'
-        self.__send(bytesCommandCode=bytesCommandCode)
-        # print(self.serialChannel.readline())
-        self.__receieve()
-        self.__receieve()
-
-    def __send(self, bytesCommandCode):
-        time.sleep(0.5)
-        self.serialChannel.write(bytesCommandCode)
+    def __send(self, byte_code):
+        try:
+            self.__cmd_lock.acquire()
+            self.serial_channel.write(byte_code)
+        finally:
+            self.__cmd_lock.release()
 
     def __receieve(self):
-        time.sleep(0.5)
-        self.message = self.serialChannel.readline()
+        self.message = self.serial_channel.readline()
         return self.message
 
-    def __generateComd(self, ha, dec, isRaMove=False, isDecMove=False, isDisp=True):
+    def __data_guide(self, ha, dec, isRaMove=False, isDecMove=False, isDisp=True):
         '''
         生成追踪命令
 
@@ -255,7 +242,7 @@ class Communicator(object):
 
         comd_m = com_begin + com_sp + ra_m + com_sp + strHexRa + \
                  com_dec + com_sp + dec_m + com_sp + strHexDec + com_end
-        va = self.verifyCode(comd_m)
+        va = self.__verify_code(comd_m)
         commd_full = comd_m + ' ' + va
         if isDisp:
             print('full command is : ' + commd_full)
@@ -289,21 +276,3 @@ class Communicator(object):
                 return s_Str + inputStr
             else:
                 print('input num to str error')
-
-    def low_location(self):
-        hexCommandCode = self.__generateComd(-90, -42.8, True, True)
-        bytesCommandCode = bytes.fromhex(hexCommandCode)
-        self.__send(bytesCommandCode=bytesCommandCode)
-
-    @debugLog
-    def reset(self):
-        """
-        望远镜视向置为 0,47.8
-        :return:
-        """
-        # bytesCommandCode = bytes.fromhex(self.RESET)
-        # self.__send(bytesCommandCode=bytesCommandCode)
-
-        hexCommandCode = self.__generateComd(0.5, 42.8, True, True)
-        bytesCommandCode = bytes.fromhex(hexCommandCode)
-        self.__send(bytesCommandCode=bytesCommandCode)

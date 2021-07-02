@@ -6,6 +6,7 @@
 # @File    : target.py
 # @Software: PyCharm
 # @version : 0.0.1
+import traceback
 from copy import copy, deepcopy
 
 
@@ -31,6 +32,7 @@ class Target:
         try:
             return self.__dict__[item]
         except KeyError:
+            traceback.format_exc()
             return f"不存在{item}属性"
 
     def __copy__(self):

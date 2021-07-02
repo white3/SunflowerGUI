@@ -9,11 +9,45 @@
 from sunflower.internal.model.circle_lock import CircleLock
 from copy import copy, deepcopy
 from sunflower.internal.model.circle_lock import CircleLock
-
+from threading import Lock
 
 class ConcurrentMeta(object):
     def __init__(self):
         self.condition = CircleLock()
+
+
+class ConDataContainer(object):
+    def __init__(self):
+        self.__data = {}
+        self.__lock = {}
+
+    # def exec(self, key, func, *args, **kw):
+    #     if self.lock.get(key) is None:
+    #         raise Exception('未初始%s变量' % key)
+    #     self.lock[key].write_lock()
+    #     func(self.data[key], *args, **kw)
+    #     self.lock[key].write_unlock()
+
+    def get_lock(self, key):
+        if self.__lock.get(key) is None:
+            return None
+        return self.__lock[key]
+
+    def set(self, key, value, timeout=-1, blocking=True):
+        if self.__lock.get(key) is None:
+            self.__lock[key] = Lock()
+        self.__lock[key].acquire(timeout=timeout, blocking=blocking)
+        self.__data[key] = value
+        self.__lock[key].release()
+
+    def get(self, key, lock=False):
+        if self.__lock.get(key) is None:
+            return None, None
+        if lock:
+            return self.__data[key], self.get_lock(key)
+        else:
+            return self.__data[key]
+
 
 class ConcurrentDataContainer(dict):
     """
