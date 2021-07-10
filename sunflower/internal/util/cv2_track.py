@@ -57,17 +57,17 @@ def compute_offset(args=None):
 
 
 def active_offset():
-    cap = cv2.VideoCapture(0)
-    cap.set(3, 640)  # 设置帧宽
-    cap.set(4, 480)  # 设置帧高
+    cap = cv2.VideoCapture(1)
+    cap.set(3, 1280)  # 设置帧宽
+    cap.set(4, 720)  # 设置帧高
     font = cv2.FONT_HERSHEY_SIMPLEX  # 设置字体样式
     kernel = np.ones((5, 5), np.uint8)  # 卷积核
 
     if cap.isOpened() is True:  # 检查摄像头是否正常启动
         while (True):
             ret, frame = cap.read()
-            gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # 转换为灰色通道
-            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # 转换为HSV空间
+            hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # 转换为灰色通道
+            # hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)  # 转换为HSV空间
 
             lower_green = np.array([35, 50, 100])  # 设定绿色的阈值下限
             upper_green = np.array([77, 255, 255])  # 设定绿色的阈值上限

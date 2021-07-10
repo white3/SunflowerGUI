@@ -28,6 +28,11 @@ class ConDataContainer(object):
     #     func(self.data[key], *args, **kw)
     #     self.lock[key].write_unlock()
 
+    def unsafe_set(self, key, value):
+        if self.__lock.get(key) is None:
+            self.__lock[key] = Lock()
+        self.__data[key] = value
+
     def get_lock(self, key):
         if self.__lock.get(key) is None:
             return None

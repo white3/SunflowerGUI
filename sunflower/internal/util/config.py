@@ -12,7 +12,7 @@ from sunflower.internal.util.decorator import debugLog
 
 
 class Config:
-    def __init__(self, configFilePath="res/config.ini"):
+    def __init__(self, configFilePath="config.ini"):
         '''
         修改配置并关闭程序后会自动保存至文件
 

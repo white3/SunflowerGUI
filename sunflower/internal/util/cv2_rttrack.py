@@ -5,9 +5,9 @@ import cv2
 import time
 
 def active_offset():
-    cap = cv2.VideoCapture(0)
-    cap.set(3, 640)  # 设置帧宽
-    cap.set(4, 480)  # 设置帧高
+    cap = cv2.VideoCapture(1)
+    cap.set(3, 1280)  # 设置帧宽
+    cap.set(4, 720)  # 设置帧高
     # font = cv2.FONT_HERSHEY_SIMPLEX  # 设置字体样式
     # kernel = np.ones((5, 5), np.uint8)  # 卷积核
     args = {'image': 'res/cv3.jpg', 'radius': 11}

@@ -6,11 +6,14 @@
 # @File    : Communicator.py
 # @Software: PyCharm
 # @version : 0.0.1
+import traceback
 
 import serial
 import time
 from setting import commands, frame_code
 import threading
+
+from sunflower.internal.constants import constant
 from sunflower.internal.util.decorator import debugLog
 
 FSB = frame_code['FSB']
@@ -84,15 +87,18 @@ class Communicator(object):
         :param key:
         :return:
         """
-        if self.commands[key]:
+        print(key)
+        if self.commands.get(key):
             self.commands[key]()
-        else:
+        elif commands.get(key):
             # 'FSB ADB CMB FEB ENB PAR'
             frame = "%s %s %s %s %s" % (FSB, ADB, commands[key], FEB, ENB)
             rpc_code = bytes.fromhex(frame + ' ' + self.__verify_code(frame))
             self.__send(rpc_code)
             self.__receieve()  # invalid data
             self.__receieve()  # invalid data
+        else:
+            raise Exception('command error')
 
     @debugLog
     def drop_power(self):
@@ -161,21 +167,26 @@ class Communicator(object):
         self.__send(byte_code=byte_code)
 
     @debugLog
-    def track(self, ha, dec):
+    def track(self, ha, dec, is_ha, is_dec):
         """
         追踪坐标
 
+        :param is_dec: 是否引导dec轴
+        :param is_ha: 是否引导ha轴
         :param ha: 时角, 度
         :param dec: 赤纬, 度
         :return:
         """
-        hex_code = self.__data_guide(ha, dec, True, True)
-        byte_code = bytes.fromhex(hex_code)
-        self.__send(byte_code)
-        # 文档提到需 200ms 间隙
-        time.sleep(0.2)
-        self.__receieve()  # invalid data
-        self.__receieve()  # invalid data
+        if is_ha or is_dec:
+            hex_code = self.__data_guide(ha, dec, is_ha, is_dec)
+            byte_code = bytes.fromhex(hex_code)
+            self.__send(byte_code)
+            # 文档提到需 200ms 间隙
+            time.sleep(0.2)
+            self.__receieve()  # invalid data
+            self.__receieve()  # invalid data
+        elif constant.is_debug:
+            print('pass track')
 
     def __verify_code(self, comd):
         '''
@@ -196,15 +207,29 @@ class Communicator(object):
     def __send(self, byte_code):
         try:
             self.__cmd_lock.acquire()
-            self.serial_channel.write(byte_code)
+            if not constant.is_debug:
+                self.serial_channel.write(byte_code)
+            else:
+                print(byte_code)
+        except serial.SerialTimeoutException:
+            print(traceback.format_exc())
         finally:
             self.__cmd_lock.release()
 
     def __receieve(self):
-        self.message = self.serial_channel.readline()
-        return self.message
+        try:
+            if not constant.is_debug:
+                self.message = self.serial_channel.readline()
+                return self.message
+            else:
+                return bytes.fromhex('7B 00 13 2B 30 31 31 2E 30 31 2B 30 33 34 2E 35 30 08 00 21 7D 0D 0A EF')
+                # return b'7B00132B3031312E30312B3033342E353002010800217D0D0AEF'
+        except serial.SerialTimeoutException:
+            print(traceback.format_exc())
+        except Exception:
+            print(traceback.format_exc())
 
-    def __data_guide(self, ha, dec, isRaMove=False, isDecMove=False, isDisp=True):
+    def __data_guide(self, ha, dec, isRaMove=False, isDecMove=False):
         '''
         生成追踪命令
 
@@ -212,7 +237,6 @@ class Communicator(object):
         :param dec:
         :param isRaMove:
         :param isDecMove:
-        :param isDisp:
         :return:
         '''
         com_begin = '7B 01 44 41'
@@ -244,7 +268,7 @@ class Communicator(object):
                  com_dec + com_sp + dec_m + com_sp + strHexDec + com_end
         va = self.__verify_code(comd_m)
         commd_full = comd_m + ' ' + va
-        if isDisp:
+        if constant.is_debug:
             print('full command is : ' + commd_full)
         return commd_full
 

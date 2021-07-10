@@ -29,25 +29,37 @@ class SerialController(Controller):
         # interruptible_thread.ThreadMeta.__init__(self)
         self.data = kwargs['data']
         self.view = kwargs['view']
-        self.data.get('ser').port = constant.port
+        ser = self.data.get('ser')
+        ser.port = constant.port
+        self.data.set('ser', ser)
         # self.view.comNumberSpinBox.valueChanged.connect(self.work)
         self.view.comButton.clicked.connect(self.work)
 
     def work(self):
         time.sleep(constant.SERIAL_FLUSH_TIME)
         port = "COM" + str(self.view.comNumberSpinBox.value())
+        ser = self.data.get('ser')
 
-        if self.data.get('ser').port != port:  # 更换端口前，如果旧端口还连接,则先断开
-            self.data.get('ser').close()
-            self.data.get('ser').port = port  # 更换端口
+        # 更换端口前，如果旧端口还连接,则先断开
+        if ser.port != port:
+            # 更换端口
+            ser.close()
+            ser.port = port
+            self.data.set('ser', ser)
+
         # 未更换端口
-        # 已连接则进行探活
         try:
-            QApplication.processEvents()
-            self.data.get('ser').open()  # 尝试连接
-            # 连接成功：界面蓝色，线程睡眠
-            status.status_log("connect success", constant.MEDIUM)
-            self.view.comNumberSpinBox.setStyleSheet("color: #00aaff;border: 2px solid #707070;")
+            # 连接探活
+            if ser.isOpen():
+                status.status_log("already connected", constant.MEDIUM)
+                self.view.comNumberSpinBox.setStyleSheet("color: #00aaff;border: 2px solid #707070;")
+            # 尝试连接
+            else:
+                QApplication.processEvents()
+                self.data.get('ser').open()
+                # 连接成功：界面蓝色，线程睡眠
+                status.status_log("connect success", constant.MEDIUM)
+                self.view.comNumberSpinBox.setStyleSheet("color: #00aaff;border: 2px solid #707070;")
             # self.wait()
         except Exception:
             # 连接失败：输出异常，界面显示红色    print(e)

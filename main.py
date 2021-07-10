@@ -6,6 +6,7 @@
 # @File    : main.py
 # @Software: PyCharm
 # @version : 0.0.1
+import time
 import traceback
 
 from PyQt5 import QtGui, QtWidgets
@@ -30,6 +31,7 @@ if __name__ == '__main__':
         # 加载 图标
         MainWindow.setWindowIcon(QtGui.QIcon('res/favicon.ico'))
 
+        time.sleep(1)
         # 加载控制器
         gui.setupSunflower()
 

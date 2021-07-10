@@ -5,6 +5,8 @@
 # Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
+from sunflower.internal.controller.light_corrector import LightCalibrateController
+from sunflower.internal.util.communicator import Communicator
 from sunflower.internal.view.window_ui import Ui_Form
 from sunflower.internal.model.target import Target
 from sunflower.internal.model.offset import Offset
@@ -80,6 +82,8 @@ class Window(object):
                                        9: ['PLUTO_BARYCENTER', 'PLUTO BARYCENTER'],
                                        10: ['SUN'], 199: ['MERCURY'], 299: ['VENUS'], 399: ['EARTH'], 301: ['MOON'],
                                        499: ['MARS']})
+        self.container.set('communicator', Communicator(serial_channel=self.container.get('ser')))
+        self.container.set('traced', False)
 
     def init_modules(self):
         """
@@ -95,18 +99,21 @@ class Window(object):
         # 定义望远镜通信模块
         self.modules['control'] = CommunicatorControl(view=self.ui_form, data=self.container)
 
-        # 定义指向误差记录模块
-        # self.modules['recorderController'] = RecorderController(view=self.ui_form, data=self.container)
-
         # 手动修正
         self.modules['manualCalibrateController'] = ManualCalibrateController(view=self.ui_form, data=self.container)
 
         # 初始化仪表模块
         self.modules['viewer'] = Viewer(view=self.ui_form, data=self.container)
 
+        # 光学修正模块 lightCorrectButton
+        self.modules['lightCalibrateController'] = LightCalibrateController(view=self.ui_form, data=self.container)
+
         # 定义望远镜目标模块
         # self.displayStatus(status="setupTarget", color=constants.MEDIUM)
         # self.setupTarget()
+
+        # 定义指向误差记录模块
+        # self.modules['recorderController'] = RecorderController(view=self.ui_form, data=self.container)
 
     def setupSunflower(self):
         """
@@ -115,9 +122,6 @@ class Window(object):
         """
         self.init_data()
         self.init_modules()
-        for module in self.modules:
-            if self.modules[module].setup():
-                self.modules[module].run()
 
     def setupUi(self, MainWindow):
         """

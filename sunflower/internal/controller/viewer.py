@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # @Time    : 2020/11/10 22:41
 # @Author  : Menzel3
-# @Site    : 
+# @Site    :
 # @File    : viewer.py
 # @Software: PyCharm
 # @version : 0.0.1
@@ -33,13 +33,17 @@ class Viewer(ConController):
                                      lon=constant.LON,
                                      elevation=constant.ELEVATION,
                                      target=self.data.get('target'))
+        self.view.viewButton.clicked.connect(self.start)
+
+    def start(self):
+        self.run()
 
     def setup(self) -> bool:
         """
         执行启动前
         :return: True 表示直接启动, False 表示不直接启动
         """
-        return True
+        return False
 
     def work(self):
         """
@@ -48,13 +52,10 @@ class Viewer(ConController):
         """
         # display target position
         ha, dec, ra, utc_datetime = self.calculator.computeLocation()
-        try:
-            target, lock = self.data.get('target', lock=True)
-            lock.acquire(timeout=1)
-            target.hourAngle, target.declination, target.rightAscension = ha, dec, ra
-            lock.release()
-        except Exception:
-            print(traceback.format_exc())
+        target = self.data.get('target')
+        target.hourAngle, target.declination, target.rightAscension = ha, dec, ra
+        self.data.set('target', target)
+
         self.view.haLcdNumber.display(ha)
         self.view.decLcdNumber.display(dec)
         self.view.raLcdNumber.display(ra)
@@ -72,4 +73,4 @@ class Viewer(ConController):
         self.view.telescopeHALcdNumber.display(self.data.get('currentDirecting').hourAngle)
         self.view.telescopeDecLcdNumber.display(self.data.get('currentDirecting').declination)
         time.sleep(constant.VIEW_FLUSH_TIME)
-        print(ha, dec, ra)
+        # print(ha, dec, ra)
