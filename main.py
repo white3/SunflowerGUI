@@ -30,8 +30,7 @@ if __name__ == '__main__':
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
         # 加载 图标
         MainWindow.setWindowIcon(QtGui.QIcon('res/favicon.ico'))
-
-        time.sleep(1)
+        
         # 加载控制器
         gui.setupSunflower()
 
