@@ -75,9 +75,15 @@ class LightCalibrateController(ConController):
             cv2.circle(frame, maxLoc, constant.radius, (255, 0, 255), 10)
             offset = [
                 (constant.camera_center[0] - maxLoc[0]) * constant.camera_alpha_width_percentage,
-                constant.camera_center[1] - maxLoc[1] * constant.camera_alpha_height_percentage, ]
+                (constant.camera_center[1] - maxLoc[1]) * constant.camera_alpha_height_percentage, ]
 
-            print("需顺移 x_offset: %s, 需上移 y_offset: %s" % (offset[0], offset[1]))
+            if constant.is_debug:
+                print("需顺移 x_offset: %s, 需上移 y_offset: %s" % (offset[0], offset[1]))
+
+            # 需要偏转的,
+            # if haFitOffset.offset * offset[0] > 0 and haFitOffset.offset = offset[0]
+            haFitOffset.offset = offset[0]
+            decFitOffset.offset = offset[1]
 
             image = qimage2ndarray.array2qimage(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
             pixmap = QPixmap.fromImage(image)
